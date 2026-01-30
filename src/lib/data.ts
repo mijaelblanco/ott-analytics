@@ -1,0 +1,130 @@
+// Platform data types and utilities
+
+export interface PlatformData {
+  platform: string;
+  dailyUnits: number;
+  totalUnits: number;
+}
+
+export interface AnalyticsData {
+  date: string;
+  displayDate: string;
+  platforms: PlatformData[];
+  grandTotal: {
+    daily: number;
+    total: number;
+  };
+}
+
+// Baseline data as of January 29, 2025
+const BASELINE_DATE = new Date('2025-01-29');
+
+const BASELINE_TOTALS: Record<string, number> = {
+  ROKU: 82030,
+  'FIRE TV': 70145,
+  'GOOGLE OS': 72157,
+  LG: 50672,
+  TVOS: 794,
+  SAMSUNG: 13393,
+};
+
+const BASELINE_DAILY: Record<string, number> = {
+  ROKU: 1999,
+  'FIRE TV': 1701,
+  'GOOGLE OS': 1540,
+  LG: 1230,
+  TVOS: 14,
+  SAMSUNG: 754,
+};
+
+// Monthly growth targets (approximate units per month)
+const MONTHLY_TARGETS: Record<string, number> = {
+  ROKU: 2500,
+  'FIRE TV': 2000,
+  'GOOGLE OS': 1600,
+  LG: 1200,
+  TVOS: 20,
+  SAMSUNG: 1000,
+};
+
+// Seeded random number generator for consistent but varied results
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+// Get daily increment with randomization
+function getDailyIncrement(platform: string, dayIndex: number): number {
+  const monthlyTarget = MONTHLY_TARGETS[platform];
+  const dailyAverage = monthlyTarget / 30;
+
+  // Add variation: ±30% randomization
+  const seed = platform.charCodeAt(0) * 1000 + dayIndex;
+  const variation = (seededRandom(seed) - 0.5) * 0.6; // -30% to +30%
+  const increment = Math.round(dailyAverage * (1 + variation));
+
+  return Math.max(0, increment);
+}
+
+// Calculate data for a specific date
+export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData {
+  // Data is always 1 day behind (if today is 30, show data for 29)
+  const dataDate = new Date(currentDate);
+  dataDate.setDate(dataDate.getDate() - 1);
+
+  // Calculate days since baseline
+  const daysDiff = Math.floor((dataDate.getTime() - BASELINE_DATE.getTime()) / (1000 * 60 * 60 * 24));
+
+  const platforms: PlatformData[] = [];
+
+  const platformNames = ['ROKU', 'FIRE TV', 'GOOGLE OS', 'LG', 'TVOS', 'SAMSUNG'];
+
+  for (const platform of platformNames) {
+    let totalUnits = BASELINE_TOTALS[platform];
+    let dailyUnits = BASELINE_DAILY[platform];
+
+    if (daysDiff > 0) {
+      // Add increments for each day since baseline
+      for (let i = 1; i <= daysDiff; i++) {
+        const increment = getDailyIncrement(platform, i);
+        totalUnits += increment;
+        // Last day's increment becomes the "daily" value
+        if (i === daysDiff) {
+          dailyUnits = increment;
+        }
+      }
+    } else if (daysDiff === 0) {
+      // Exact baseline date - use baseline values
+      dailyUnits = BASELINE_DAILY[platform];
+    }
+
+    platforms.push({
+      platform,
+      dailyUnits,
+      totalUnits,
+    });
+  }
+
+  // Format display date in Spanish
+  const displayDate = formatSpanishDate(dataDate);
+
+  return {
+    date: dataDate.toISOString().split('T')[0],
+    displayDate,
+    platforms,
+    grandTotal: {
+      daily: platforms.reduce((sum, p) => sum + p.dailyUnits, 0),
+      total: platforms.reduce((sum, p) => sum + p.totalUnits, 0),
+    },
+  };
+}
+
+function formatSpanishDate(date: Date): string {
+  const day = date.getDate();
+  const months = [
+    'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+    'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+  ];
+  const month = months[date.getMonth()];
+  return `AL ${day} DE ${month}`;
+}
