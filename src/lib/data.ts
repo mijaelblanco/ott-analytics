@@ -14,18 +14,23 @@ export interface AnalyticsData {
     daily: number;
     total: number;
   };
+  mobileApps: {
+    platform: string;
+    totalUnits: number;
+  }[];
+  mobileTotal: number;
 }
 
-// Baseline data as of January 29, 2025
-const BASELINE_DATE = new Date('2025-01-29');
+// Baseline data as of January 29, 2026
+const BASELINE_DATE = new Date('2026-01-29');
 
 const BASELINE_TOTALS: Record<string, number> = {
-  ROKU: 82030,
-  'FIRE TV': 70145,
-  'GOOGLE OS': 72157,
-  LG: 50672,
-  TVOS: 794,
-  SAMSUNG: 13393,
+  ROKU: 81834,
+  'FIRE TV': 69945,
+  'GOOGLE OS': 71976,
+  LG: 50440,
+  TVOS: 792,
+  SAMSUNG: 13240,
 };
 
 const BASELINE_DAILY: Record<string, number> = {
@@ -45,6 +50,14 @@ const MONTHLY_TARGETS: Record<string, number> = {
   LG: 1200,
   TVOS: 20,
   SAMSUNG: 1000,
+};
+
+// Mobile app baseline totals (historic, grow slowly 1-2 per week)
+const MOBILE_APP_BASELINE: Record<string, number> = {
+  'Azteca Noreste Mobile iOS': 1190,
+  'Azteca Noreste Mobile Android': 2512,
+  'El Horizonte Android': 1880,
+  'El Horizonte iOS': 1741,
 };
 
 // Seeded random number generator for consistent but varied results
@@ -108,6 +121,32 @@ export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData 
   // Format display date in Spanish
   const displayDate = formatSpanishDate(dataDate);
 
+  // Calculate mobile app totals (grow 1-2 per week, so ~0.2 per day)
+  const mobileAppNames = [
+    'Azteca Noreste Mobile iOS',
+    'Azteca Noreste Mobile Android',
+    'El Horizonte Android',
+    'El Horizonte iOS',
+  ];
+
+  const mobileApps = mobileAppNames.map((appName, index) => {
+    let totalUnits = MOBILE_APP_BASELINE[appName];
+
+    if (daysDiff > 0) {
+      // Add ~1-2 per week: check each week and add 1 or 2
+      const weeksPassed = Math.floor(daysDiff / 7);
+      for (let w = 0; w < weeksPassed; w++) {
+        const seed = appName.charCodeAt(0) * 100 + w;
+        const increment = seededRandom(seed) > 0.5 ? 2 : 1;
+        totalUnits += increment;
+      }
+    }
+
+    return { platform: appName, totalUnits };
+  });
+
+  const mobileTotal = mobileApps.reduce((sum, app) => sum + app.totalUnits, 0);
+
   return {
     date: dataDate.toISOString().split('T')[0],
     displayDate,
@@ -116,6 +155,8 @@ export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData 
       daily: platforms.reduce((sum, p) => sum + p.dailyUnits, 0),
       total: platforms.reduce((sum, p) => sum + p.totalUnits, 0),
     },
+    mobileApps,
+    mobileTotal,
   };
 }
 
