@@ -110,16 +110,38 @@ export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData 
 
   const platformNames = ['ROKU', 'FIRE TV', 'GOOGLE OS', 'LG', 'TVOS', 'SAMSUNG'];
 
+  // Check if we're in the same month as baseline (January 2026)
+  const isBaselineMonth = (year === BASELINE_YEAR && month === BASELINE_MONTH);
+
+  // Calculate the first day of current month for monthly reset
+  const firstOfMonth = new Date(year, month - 1, 1);
+  const firstOfMonthDaysDiff = getDaysDiff(year, month, 1);
+
   for (const platform of platformNames) {
     let totalUnits = BASELINE_TOTALS[platform];
-    let dailyUnits = BASELINE_DAILY[platform];
+    let dailyUnits = 0;
+
+    // If we're in baseline month, start with baseline daily values
+    if (isBaselineMonth) {
+      dailyUnits = BASELINE_DAILY[platform];
+    }
 
     if (daysDiff > 0) {
       // Add increments for each day since baseline
       for (let i = 1; i <= daysDiff; i++) {
         const increment = getDailyIncrement(platform, i);
         totalUnits += increment;
-        dailyUnits += increment; // Accumulate daily values
+
+        // For monthly column: only accumulate days within current month
+        if (isBaselineMonth) {
+          // Same month as baseline - accumulate all
+          dailyUnits += increment;
+        } else {
+          // Different month - only count days from start of this month
+          if (i > firstOfMonthDaysDiff) {
+            dailyUnits += increment;
+          }
+        }
       }
     }
 
