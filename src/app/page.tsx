@@ -114,7 +114,7 @@ export default function Home() {
         </div>
 
         <div className="mt-8 text-center text-gray-500 text-sm">
-          <p>Los datos se actualizan automáticamente. Última actualización: {new Date().toLocaleString('es-MX')}</p>
+          <p>Los datos se actualizan automáticamente. Última actualización: {new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}</p>
           <p className="mt-1">Los datos mostrados tienen un día de retraso</p>
         </div>
       </main>
