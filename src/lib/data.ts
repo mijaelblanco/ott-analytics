@@ -22,7 +22,9 @@ export interface AnalyticsData {
 }
 
 // Baseline data as of January 29, 2026
-const BASELINE_DATE = new Date('2026-01-29');
+const BASELINE_YEAR = 2026;
+const BASELINE_MONTH = 1; // January
+const BASELINE_DAY = 29;
 
 const BASELINE_TOTALS: Record<string, number> = {
   ROKU: 81834,
@@ -79,14 +81,27 @@ function getDailyIncrement(platform: string, dayIndex: number): number {
   return Math.max(0, increment);
 }
 
+// Calculate days difference using simple date math (avoids timezone issues)
+function getDaysDiff(year: number, month: number, day: number): number {
+  // Convert both dates to days since epoch for comparison
+  const dataDateNum = new Date(year, month - 1, day).getTime();
+  const baselineDateNum = new Date(BASELINE_YEAR, BASELINE_MONTH - 1, BASELINE_DAY).getTime();
+  return Math.floor((dataDateNum - baselineDateNum) / (1000 * 60 * 60 * 24));
+}
+
 // Calculate data for a specific date
 export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData {
   // Data is always 1 day behind (if today is 30, show data for 29)
   const dataDate = new Date(currentDate);
   dataDate.setDate(dataDate.getDate() - 1);
 
+  // Get year, month, day to avoid timezone issues
+  const year = dataDate.getFullYear();
+  const month = dataDate.getMonth() + 1;
+  const day = dataDate.getDate();
+
   // Calculate days since baseline
-  const daysDiff = Math.floor((dataDate.getTime() - BASELINE_DATE.getTime()) / (1000 * 60 * 60 * 24));
+  const daysDiff = getDaysDiff(year, month, day);
 
   const platforms: PlatformData[] = [];
 
