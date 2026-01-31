@@ -119,14 +119,8 @@ export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData 
       for (let i = 1; i <= daysDiff; i++) {
         const increment = getDailyIncrement(platform, i);
         totalUnits += increment;
-        // Last day's increment becomes the "daily" value
-        if (i === daysDiff) {
-          dailyUnits = increment;
-        }
+        dailyUnits += increment; // Accumulate daily values
       }
-    } else if (daysDiff === 0) {
-      // Exact baseline date - use baseline values
-      dailyUnits = BASELINE_DAILY[platform];
     }
 
     platforms.push({
