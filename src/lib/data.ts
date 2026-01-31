@@ -91,11 +91,14 @@ function getDaysDiff(year: number, month: number, day: number): number {
 
 // Calculate data for a specific date
 export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData {
+  // Use Mexico City timezone (UTC-6) to ensure consistent date handling
+  const mexicoTime = new Date(currentDate.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+
   // Data is always 1 day behind (if today is 30, show data for 29)
-  const dataDate = new Date(currentDate);
+  const dataDate = new Date(mexicoTime);
   dataDate.setDate(dataDate.getDate() - 1);
 
-  // Get year, month, day to avoid timezone issues
+  // Get year, month, day
   const year = dataDate.getFullYear();
   const month = dataDate.getMonth() + 1;
   const day = dataDate.getDate();
