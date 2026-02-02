@@ -138,7 +138,7 @@ export function getAnalyticsData(currentDate: Date = new Date()): AnalyticsData 
           dailyUnits += increment;
         } else {
           // Different month - only count days from start of this month
-          if (i > firstOfMonthDaysDiff) {
+          if (i >= firstOfMonthDaysDiff) {
             dailyUnits += increment;
           }
         }
